@@ -35,7 +35,7 @@
 }
 .coerceColumnType <- function(columns, type) {
   as.data.frame(
-    lapply(columns, type)
+    lapply(columns, function(col) type(as.character(col)))
   )
 }
 
