@@ -275,7 +275,7 @@ isTryError <- function(obj){
   if (isInsideJASP()) {
     dataset <- .fromRCPP(".readDatasetToEndNative", unlist(columns), unlist(columns.as.numeric), unlist(columns.as.ordinal), unlist(columns.as.factor), all.columns != FALSE)
   } else {
-    dataset <- .readDataSetToEndFromR(unlist(columns), unlist(columns.as.numeric), unlist(columns.as.factor), all.columns)
+    dataset <- .readDataSetToEndFromR(unlist(columns), unlist(columns.as.numeric), unlist(columns.as.ordinal), unlist(columns.as.factor), all.columns)
   }
   dataset <- .excludeNaListwise(dataset, exclude.na.listwise)
 
