@@ -47,7 +47,7 @@
     cl <- class(dataset[[i]])[1]
     specification[[i]] <- list(
       name = colnames(dataset)[[i]],
-      type = cl,
+      type = "scale",
       labels = if(cl %in% c("factor", "ordered")) levels(dataset[[i]]) else NULL
     )
   }

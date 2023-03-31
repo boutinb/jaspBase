@@ -83,9 +83,7 @@ runJaspResults <- function(name, title, dataKey, options, stateKey, functionCall
 
   jaspResultsCPP$setOptions(options)
 
-  dataKey     <- rjson::fromJSON(dataKey)
   options     <- rjson::fromJSON(options)
-  stateKey    <- rjson::fromJSON(stateKey)
 
   if (base::exists(".requestStateFileNameNative")) {
     location              <- .fromRCPP(".requestStateFileNameNative")
@@ -105,6 +103,7 @@ runJaspResults <- function(name, title, dataKey, options, stateKey, functionCall
 
   dataset <- NULL
   if (! is.null(dataKey)) {
+    dataKey <- rjson::fromJSON(dataKey)
     cols    <- .getDataSetCols(dataKey, options)
     dataset <- do.call(.readDataSetToEnd, cols)
   }
@@ -1014,23 +1013,89 @@ registerData <- function(data) {
    #TODO
 }
 
-checkAnalysisOptions <- function(analysisName, options, version) {
+checkAnalysisOptions <- function(qmlFile, options, version) {
   # TODO when QMLComponents can be linked to jaspBase
-  return(options)
+  return(runQml(qmlFile, as.character(toJSON(options)), as.character(toJSON(.dataSetColumnSpecification()))))
 }
 
 #' @export
-runWrappedAnalysis <- function(analysisName, data, options, version) {
+runWrappedAnalysis <- function(analysisName, qmlFile, data, options, version) {
   if (jaspResultsCalledFromJasp()) {
-
-    result <- list("options" = options, "analysis" = analysisName, "version" = version)
-    result <- jsonlite::toJSON(result, auto_unbox = TRUE, digits = NA, null="null", force = TRUE)
-    return(as.character(result))
+     #We dont run this here, we let JASP handle it, despite what the functionname might make you believe ;)
+     return(toJSON(list("options" = options, "analysis" = analysisName, "version" = version)))
 
   } else {
 
-    options <- checkAnalysisOptions(analysisName, options, version)
-    return(jaspTools::runAnalysis(analysisName, data, options))
-
+    .setDataSet(data)
+    options <- checkAnalysisOptions(qmlFile, options, version)
+    print(options)
+    return(runJaspResults(analysisName, "", NULL, options, NULL))
   }
 }
+
+
+getTempOutputLocation <- function(dir = NULL) {
+  loc <- file.path(tempdir(), "jaspBase")
+  if (!dir.exists(loc))
+    dir.create(loc)
+  if (!is.null(dir)) {
+    if (!dir %in% c("state", "html"))
+      stop("Unknown output directory requested ", dir)
+
+    loc <- file.path(loc, dir)
+    if (!dir.exists(loc))
+      dir.create(loc)
+  }
+  return(loc)
+}
+
+.insertRbridgeIntoEnv <- function(env) {
+  env[[".automaticColumnEncDecoding"]] <- FALSE
+  env[[".encodeColNamesStrict"]]       <- function(x) return(x)
+  env[[".decodeColNamesStrict"]]       <- function(x) return(x)
+  env[[".encodeColNamesLax"]]          <- function(x) return(x)
+  env[[".decodeColNamesLax"]]          <- function(x) return(x)
+  env[[".encodeColNamesStrict"]]       <- function(x) return(x)
+
+  env[[".setColumnDataAsScale"]]       <- function(...) return(TRUE)
+  env[[".setColumnDataAsOrdinal"]]     <- function(...) return(TRUE)
+  env[[".setColumnDataAsNominal"]]     <- function(...) return(TRUE)
+  env[[".setColumnDataAsNominalText"]] <- function(...) return(TRUE)
+
+  env[[".allColumnNamesDataset"]]      <- function(...) {
+    dataset <- .getInternal("dataset")
+    dataset <- loadCorrectDataset(dataset)
+    return(colnames(dataset))
+  }
+}
+
+# These are used in combination with getAnywhere() and can stay in the jaspTools namespace
+.ppi <- 192
+
+.baseCitation <- "x"
+
+
+.requestTempFileNameNative <- function(...) {
+  root <- getTempOutputLocation("html")
+  numPlots <- length(list.files(file.path(root, "plots")))
+  list(
+    root = root,
+    relativePath = file.path("plots", paste0(numPlots + 1, ".png"))
+  )
+}
+
+.requestStateFileNameNative <- function() {
+  root <- getTempOutputLocation("state")
+  name <- "state"
+  list(
+    root = root,
+    relativePath = name
+  )
+}
+
+.callbackNative <- function(...) {
+  list(status="ok")
+}
+
+.imageBackground <- function(...) return("white")
+
