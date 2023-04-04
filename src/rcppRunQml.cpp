@@ -5,65 +5,32 @@ using namespace Rcpp;
 #include <QCoreApplication>
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
-#include <iostream>
 #include <QQmlContext>
-#include <QThread>
 #include <QFileInfo>
-#include <QAbstractEventDispatcher>
 #include <QQmlComponent>
 #include <QQuickItem>
-#include <QDir>
 
 #include <filesystem>
+
+#ifdef BUILDING_JASP
+#include <json/json.h>
+#else
+#include "json/json.h"
+#endif
+
 
 static bool initialized = false;
 static QGuiApplication* application = nullptr;
 static QQmlApplicationEngine* engine = nullptr;
 static const std::string SOURCE_FOLDER= "/Users/brunoboutin/JASP/source/qmlR/";
 
-void printFolder(StringVector& output, const QDir& dir, int depth = 0)
-{
-	for (QFileInfo info : dir.entryInfoList())
-	{
-		QString text = QString("Niveau %1: ").arg(depth);
-		text += info.baseName() + ", " + info.absoluteFilePath() + ", " + info.canonicalFilePath() + ": " + (info.isDir() ? "Folder" : (info.isFile() ? "file" : "???"));
-		output.push_back(text.toStdString());
-		if (info.isDir() && info.baseName() != "qt-project")
-		{
-			QDir dir2(info.absoluteFilePath());
-			printFolder(output, dir2, depth + 1);
-		}
-		else if (info.baseName() == "qmldir")
-		{
-			QFile inputFile(info.absoluteFilePath());
-			if (inputFile.open(QIODevice::ReadOnly))
-			{
-			   QTextStream in(&inputFile);
-			   while (!in.atEnd())
-				  output.push_back(in.readLine().toStdString());
-			   inputFile.close();
-			}
-		}
-
-	}
-
-}
-
-String getEnv(const std::string& name)
-{
-	Function f("Sys.getenv('" + name + "')");
-
-	return f();
-}
-
-void init(StringVector& output)
+void init()
 {
 	if (initialized) return;
 	initialized = true;
 
 	QString rHome = qgetenv("R_HOME");
 	QString qmlRFolder = rHome + "/library/qmlR";
-	output.push_back("R_HOME: " + qgetenv("R_HOME").toStdString());
 
 	QCoreApplication::addLibraryPath(qmlRFolder + "/plugins");
 
@@ -96,78 +63,58 @@ void init(StringVector& output)
 	application = new QGuiApplication(argc, argvs);
 	engine = new QQmlApplicationEngine();
 
-
-	//new MessageForwarder(this); //We do not need to store this
-
-	//ALTNavigation::registerQMLTypes("JASP");
-
 	engine->addImportPath("/Users/brunoboutin/Qt/6.4.2/macos/qml");
-	//engine->addImportPath("/Users/brunoboutin/JASP/source/build-testPlugin-Qt_6_4_2_for_macOS-Debug");
 	engine->addImportPath("/Users/brunoboutin/JASP/source/build-jaspQMLComponents-Qt_6_4_2_for_macOS-Debug/components");
-
-	output.push_back("Base URL: " + engine->baseUrl().toDisplayString().toStdString());
-	output.push_back("Current Path: " + std::filesystem::current_path().string());
-
-	QStringList paths = engine->importPathList();
-	for (QString path : paths)
-		output.push_back("Import path: " + path.toStdString());
-	QStringList pluginPaths = engine->pluginPathList();
-	for (QString path : pluginPaths)
-		output.push_back("Plugin path: " + path.toStdString());
-
-	QDir dir(":/");
-
-	printFolder(output, dir);
 }
 
 // [[Rcpp::export]]
 
 
-String runQml(String qmlFileName, String options, String data)
+String loadQmlFileAndCheckOptions(String qmlFileName, String options, String data)
 {
-	StringVector output;
-
-	init(output);
+	init();
 	engine->clearComponentCache();
 
-	std::string qmlFileNameStr = qmlFileName.get_cstring();
-	std::string optionsStr = options.get_cstring();
-	std::string dataStr = data.get_cstring();
-
-	output.push_back("File: " + qmlFileNameStr);
+	std::string qmlFileNameStr	= qmlFileName.get_cstring();
+	std::string optionsStr		= options.get_cstring();
+	std::string dataStr			= data.get_cstring();
 
 	QFileInfo			qmlFile(QString::fromStdString(qmlFileNameStr));
 	QString				qmlBaseName(qmlFile.baseName());
+	QString				error;
+	QQuickItem*			form = nullptr;
+
 	if (!qmlFile.exists())
+		error = "File not found: " + qmlFile.absoluteFilePath();
+
+	if (error.isEmpty())
 	{
-		output.push_back("File NOT found");
+		QUrl urlFile = QUrl::fromLocalFile(qmlFile.absoluteFilePath());
+		QQmlComponent	qmlComp( engine, urlFile, QQmlComponent::PreferSynchronous);
+
+		form = qobject_cast<QQuickItem*>(qmlComp.create());
+
+		if (!form)
+			error = QString::fromLatin1("QML form %1 not created").arg(QString::fromStdString(qmlFileNameStr));
+
+		for (const auto & qmlError : qmlComp.errors())
+			error += QString::fromLatin1("\nError when creating component at %1, %2: %3").arg(qmlError.line()).arg(qmlError.column()).arg(qmlError.description());
 	}
 
-	output.push_back("Found file");
-
-	QUrl urlFile = QUrl::fromLocalFile(qmlFile.absoluteFilePath());
-	QQmlComponent	qmlComp( engine, urlFile, QQmlComponent::PreferSynchronous);
-
-	QQuickItem* item = qobject_cast<QQuickItem*>(qmlComp.create());
-
-	for(const auto & error : qmlComp.errors())
-		output.push_back("Error when creating component at " + std::to_string(error.line()) + "," + std::to_string(error.column()) + ": " + error.description().toStdString());
-
-	if (!item)
+	if (error.isEmpty())
 	{
-		output.push_back("Item not created");
+		application->processEvents();
+
+		QString returnedValue;
+		QMetaObject::invokeMethod(form, "parseOptions",
+			Q_RETURN_ARG(QString, returnedValue),
+			Q_ARG(QString, QString::fromStdString(optionsStr)),
+			Q_ARG(QString, QString::fromStdString(dataStr)));
+		return returnedValue.toStdString();
 	}
 
-	output.push_back("Item created!!!!");
+	Json::Value result(Json::objectValue);
+	result["error"] = error.toStdString();
 
-	application->processEvents();
-
-	QString returnedValue;
-	QMetaObject::invokeMethod(item, "parseOptions",
-		Q_RETURN_ARG(QString, returnedValue),
-		Q_ARG(QString, QString::fromStdString(optionsStr)),
-		Q_ARG(QString, QString::fromStdString(dataStr)));
-	output.push_back("OPTIONS: " + returnedValue.toStdString());
-
-	return returnedValue.toStdString();
+	return result.toStyledString();
 }

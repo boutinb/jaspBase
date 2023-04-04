@@ -1014,22 +1014,29 @@ registerData <- function(data) {
 }
 
 checkAnalysisOptions <- function(qmlFile, options, version) {
-  # TODO when QMLComponents can be linked to jaspBase
-  return(runQml(qmlFile, as.character(toJSON(options)), as.character(toJSON(.dataSetColumnSpecification()))))
+  return(loadQmlFileAndCheckOptions(qmlFile, as.character(toJSON(options)), as.character(toJSON(.dataSetColumnSpecification()))))
 }
 
 #' @export
-runWrappedAnalysis <- function(analysisName, qmlFile, data, options, version) {
+runWrappedAnalysis <- function(moduleName, analysisName, qmlFile, data, options, version) {
   if (jaspResultsCalledFromJasp()) {
      #We dont run this here, we let JASP handle it, despite what the functionname might make you believe ;)
-     return(toJSON(list("options" = options, "analysis" = analysisName, "version" = version)))
+     return(toJSON(list("options" = options, "module" = moduleName, "analysis" = analysisName, "version" = version)))
 
   } else {
 
     .setDataSet(data)
+    qmlFile <- file.path(find.package(moduleName), "qml", qmlFile)
     options <- checkAnalysisOptions(qmlFile, options, version)
     print(options)
-    return(runJaspResults(analysisName, "", NULL, options, NULL))
+    optionsJson <- fromJSON(options)
+    if (optionsJson$error != "")
+       return(optionsJson$error)
+
+    internalAnalysisName <- paste0(moduleName, "::", analysisName, "Internal")
+    options <- as.character(toJSON(optionsJson$options))
+    print(options)
+    return(runJaspResults(internalAnalysisName, "", NULL, options, NULL))
   }
 }
 
