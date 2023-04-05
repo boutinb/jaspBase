@@ -1014,18 +1014,25 @@ registerData <- function(data) {
 }
 
 checkAnalysisOptions <- function(qmlFile, options, version) {
+   # Load the qml form, and set some options, and get back the real options needed for the analysis (formula should be parsed,
+   # and all logics set in QML should be checked).
   return(loadQmlFileAndCheckOptions(qmlFile, as.character(toJSON(options)), as.character(toJSON(.dataSetColumnSpecification()))))
 }
 
 #' @export
 runWrappedAnalysis <- function(moduleName, analysisName, qmlFile, data, options, version) {
   if (jaspResultsCalledFromJasp()) {
-     #We dont run this here, we let JASP handle it, despite what the functionname might make you believe ;)
-     return(toJSON(list("options" = options, "module" = moduleName, "analysis" = analysisName, "version" = version)))
+    # In this case, it is JASP Desktop that called the wrapper. This was done to parse the R code, and to get the arguments
+    # in a structured way. In this way the Desktop can then set the options to the QML controls of the form, and this will run the analysis.
+    # So here, just give back the parsed options.
+    return(toJSON(list("options" = options, "module" = moduleName, "analysis" = analysisName, "version" = version)))
 
   } else {
-
-    .setDataSet(data)
+    # The wrapper is called inside an R environment (R Studio probably).
+    # The data has to be registered, so that it can used later by the readDataSet functions.
+    # The options must be parsed and checked by the QML form, and then the real analysis can be called.
+    if (!is.null(data))
+        .setDataSet(data)
     qmlFile <- file.path(find.package(moduleName), "qml", qmlFile)
     options <- checkAnalysisOptions(qmlFile, options, version)
     print(options)
@@ -1035,7 +1042,6 @@ runWrappedAnalysis <- function(moduleName, analysisName, qmlFile, data, options,
 
     internalAnalysisName <- paste0(moduleName, "::", analysisName, "Internal")
     options <- as.character(toJSON(optionsJson$options))
-    print(options)
     return(runJaspResults(internalAnalysisName, "", NULL, options, NULL))
   }
 }
@@ -1056,25 +1062,26 @@ getTempOutputLocation <- function(dir = NULL) {
   return(loc)
 }
 
-.insertRbridgeIntoEnv <- function(env) {
-  env[[".automaticColumnEncDecoding"]] <- FALSE
-  env[[".encodeColNamesStrict"]]       <- function(x) return(x)
-  env[[".decodeColNamesStrict"]]       <- function(x) return(x)
-  env[[".encodeColNamesLax"]]          <- function(x) return(x)
-  env[[".decodeColNamesLax"]]          <- function(x) return(x)
-  env[[".encodeColNamesStrict"]]       <- function(x) return(x)
 
-  env[[".setColumnDataAsScale"]]       <- function(...) return(TRUE)
-  env[[".setColumnDataAsOrdinal"]]     <- function(...) return(TRUE)
-  env[[".setColumnDataAsNominal"]]     <- function(...) return(TRUE)
-  env[[".setColumnDataAsNominalText"]] <- function(...) return(TRUE)
 
-  env[[".allColumnNamesDataset"]]      <- function(...) {
-    dataset <- .getInternal("dataset")
-    dataset <- loadCorrectDataset(dataset)
-    return(colnames(dataset))
-  }
+rbridgeEnv <- list2env(list(
+".automaticColumnEncDecoding" = FALSE,
+".encodeColNamesStrict"       = function(x) return(x),
+".decodeColNamesStrict"       = function(x) return(x),
+".encodeColNamesLax"          = function(x) return(x),
+".decodeColNamesLax"          = function(x) return(x),
+".encodeColNamesStrict"       = function(x) return(x),
+".setColumnDataAsScale"       = function(...) return(TRUE),
+".setColumnDataAsOrdinal"     = function(...) return(TRUE),
+".setColumnDataAsNominal"     = function(...) return(TRUE),
+".setColumnDataAsNominalText" = function(...) return(TRUE),
+
+".allColumnNamesDataset"      = function(...) {
+  dataset <- .getInternal("dataset")
+  dataset <- loadCorrectDataset(dataset)
+  return(colnames(dataset))
 }
+))
 
 # These are used in combination with getAnywhere() and can stay in the jaspTools namespace
 .ppi <- 192

@@ -245,18 +245,13 @@ decodeColNames <- function(x, strict = FALSE, fun = NULL, ...) {
 
   # TODO: this function would benefit if jasp assigns the functions into an environment
   # that way they can be looked up directly instead of using findFun (jaspTools can also do that).
-
   defaults <- list(encode = list(strict = ".encodeColNamesStrict", lax = ".encodeColNamesLax"),
                    decode = list(strict = ".decodeColNamesStrict", lax = ".decodeColNamesLax"))
 
   method <- if (strict) "strict" else "lax"
 
-  fun <- .findFun(defaults[[type]][[method]])
+  return(rbridgeEnv[[defaults[[type]][[method]]]])
 
-  if (!is.function(fun))
-    stop("Could not locate ", type, " function; an analysis won't work correctly unless run inside JASP or jasptools", domain = NA)
-
-  return(fun)
 }
 
 # This ensures that functions can also be found in jasptools (it needs to search in the package namespace)
