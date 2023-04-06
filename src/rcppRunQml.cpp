@@ -22,11 +22,12 @@ static QQmlApplicationEngine* engine = nullptr;
 void init()
 {
 	if (application) return;
-	QString rHome = qgetenv("R_HOME");
-	QString jaspBase = rHome + "/library/jaspBase";
-	QString pluginsPath = jaspBase + "/PlugIns";
-	QString jaspPluginPath = pluginsPath;
-	QString qtPluginPath = pluginsPath;
+
+	QString rHome			= qgetenv("R_HOME"),
+			jaspBase		= rHome + "/library/jaspBase",
+			pluginsPath		= jaspBase + "/PlugIns",
+			jaspPluginPath	= pluginsPath,
+			qtPluginPath	= pluginsPath;
 
 #ifdef QT_HOME
 	QString qtHome = TO_LITERAL(QT_HOME);
@@ -42,7 +43,7 @@ void init()
 
 	qputenv("QT_QPA_PLATFORM", "minimal");
 
-	std::vector<const char*> arguments = {""};
+	std::vector<const char*> arguments = {"??"};
 
 	int		argc = arguments.size();
 	char** argvs = new char*[argc];

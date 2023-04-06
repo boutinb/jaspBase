@@ -109,14 +109,14 @@ if [ "${JASP_R_INTERFACE_LIBRARY}" != "" ]; then
 	PKG_CXXFLAGS=-DJASP_R_INTERFACE_LIBRARY\ ${PKG_CXXFLAGS}
 fi
 
-#QT_INSTALLATION_PATH=<Your own Qt installtion>
+#QT_INSTALLATION_PATH=<Your own Qt installtion, eg: /Users/brunoboutin/Qt/6.4.2/macos >
 #JASP_PLUGINS_PATH=<Your own build of JASP QML Controls>
 
-JASPBASE_INSTALL=/Users/brunoboutin/JASP/source/jaspBase/inst
 
 if [ "${QT_INSTALLATION_PATH}" == "" ]; then
-    QT_HEADER_PATH=${JASPBASE_INSTALL}/Qt
-    QT_FRAMEWORKS_PATH=${JASPBASE_INSTALL}/Frameworks
+    JASPBASE_SOURCE=$(pwd)
+    QT_HEADER_PATH=${JASPBASE_SOURCE}/inst/Qt
+    QT_FRAMEWORKS_PATH=${JASPBASE_SOURCE}/inst/Frameworks
 else
     QT_HEADER_PATH=${QT_INSTALLATION_PATH}
     QT_FRAMEWORKS_PATH=${QT_INSTALLATION_PATH}/lib
