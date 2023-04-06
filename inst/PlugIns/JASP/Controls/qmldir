@@ -1,0 +1,66 @@
+module JASP.Controls
+linktarget JASPQMLComponents
+plugin JASPQMLComponents
+classname JASPQmlPlugin
+typeinfo JASPQMLComponents.qmltypes
+prefer :/JASP/Controls/
+AddColumnField 1.0 components/JASP/Controls/AddColumnField.qml
+AssignButton 1.0 components/JASP/Controls/AssignButton.qml
+AssignedPairsVariablesList 1.0 components/JASP/Controls/AssignedPairsVariablesList.qml
+AssignedRepeatedMeasuresCells 1.0 components/JASP/Controls/AssignedRepeatedMeasuresCells.qml
+AssignedVariablesList 1.0 components/JASP/Controls/AssignedVariablesList.qml
+AvailableVariablesList 1.0 components/JASP/Controls/AvailableVariablesList.qml
+BasicThreeButtonTableView 1.0 components/JASP/Controls/BasicThreeButtonTableView.qml
+BayesFactorType 1.0 components/JASP/Controls/BayesFactorType.qml
+Button 1.0 components/JASP/Controls/Button.qml
+CheckBox 1.0 components/JASP/Controls/CheckBox.qml
+Chi2TestTableView 1.0 components/JASP/Controls/Chi2TestTableView.qml
+CIField 1.0 components/JASP/Controls/CIField.qml
+ColumnLayout 1.0 components/JASP/Controls/ColumnLayout.qml
+DropDown 1.0 components/JASP/Controls/DropDown.qml
+ComponentsList 1.0 components/JASP/Controls/ComponentsList.qml
+ComputedColumnField 1.0 components/JASP/Controls/ComputedColumnField.qml
+ContrastsList 1.0 components/JASP/Controls/ContrastsList.qml
+ControlErrorMessage 1.0 components/JASP/Controls/ControlErrorMessage.qml
+CrossButton 1.0 components/JASP/Controls/CrossButton.qml
+CustomContrastsTableView 1.0 components/JASP/Controls/CustomContrastsTableView.qml
+Divider 1.0 components/JASP/Controls/Divider.qml
+DoubleField 1.0 components/JASP/Controls/DoubleField.qml
+Section 1.0 components/JASP/Controls/Section.qml
+FactorLevelList 1.0 components/JASP/Controls/FactorLevelList.qml
+FactorsForm 1.0 components/JASP/Controls/FactorsForm.qml
+FactorsList 1.0 components/JASP/Controls/FactorsList.qml
+FileSelector 1.0 components/JASP/Controls/FileSelector.qml
+Form 1.0 components/JASP/Controls/Form.qml
+FormulaField 1.0 components/JASP/Controls/FormulaField.qml
+GridLayout 1.0 components/JASP/Controls/GridLayout.qml
+Group 1.0 components/JASP/Controls/Group.qml
+HelpButton 1.0 components/JASP/Controls/HelpButton.qml
+InputListView 1.0 components/JASP/Controls/InputListView.qml
+IntegerField 1.0 components/JASP/Controls/IntegerField.qml
+JagsTableView 1.0 components/JASP/Controls/JagsTableView.qml
+JAGSTextArea 1.0 components/JASP/Controls/JAGSTextArea.qml
+JASPScrollBar 1.0 components/JASP/Controls/JASPScrollBar.qml
+Label 1.0 components/JASP/Controls/Label.qml
+MenuButton 1.0 components/JASP/Controls/MenuButton.qml
+ModelTermsList 1.0 components/JASP/Controls/ModelTermsList.qml
+PercentField 1.0 components/JASP/Controls/PercentField.qml
+RadioButton 1.0 components/JASP/Controls/RadioButton.qml
+RadioButtonGroup 1.0 components/JASP/Controls/RadioButtonGroup.qml
+RectangularButton 1.0 components/JASP/Controls/RectangularButton.qml
+RoundedButton 1.0 components/JASP/Controls/RoundedButton.qml
+RowLayout 1.0 components/JASP/Controls/RowLayout.qml
+SetSeed 1.0 components/JASP/Controls/SetSeed.qml
+SimpleTableView 1.0 components/JASP/Controls/SimpleTableView.qml
+Slider 1.0 components/JASP/Controls/Slider.qml
+SortMenuButton 1.0 components/JASP/Controls/SortMenuButton.qml
+SubjectivePriors 1.0 components/JASP/Controls/SubjectivePriors.qml
+Switch 1.0 components/JASP/Controls/Switch.qml
+TableView 1.0 components/JASP/Controls/TableView.qml
+TabView 1.0 components/JASP/Controls/TabView.qml
+Text 1.0 components/JASP/Controls/Text.qml
+TextArea 1.0 components/JASP/Controls/TextArea.qml
+TextField 1.0 components/JASP/Controls/TextField.qml
+VariablesForm 1.0 components/JASP/Controls/VariablesForm.qml
+VariablesList 1.0 components/JASP/Controls/VariablesList.qml
+

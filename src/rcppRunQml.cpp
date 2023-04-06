@@ -15,13 +15,32 @@ using namespace Rcpp;
 static QGuiApplication* application = nullptr;
 static QQmlApplicationEngine* engine = nullptr;
 
+
+#define VALUE(string) #string
+#define TO_LITERAL(string) VALUE(string) // Why???? It works...
+
 void init()
 {
 	if (application) return;
-
 	QString rHome = qgetenv("R_HOME");
-	QString qtHome = "/Users/brunoboutin/Qt/6.4.2/macos";
-	QString jaspQMLControlsPluginPath = "/Users/brunoboutin/JASP/source/build-jaspQMLComponents-Qt_6_4_2_for_macOS-Debug";
+	QString jaspBase = rHome + "/library/jaspBase";
+	QString pluginsPath = jaspBase + "/PlugIns";
+	QString jaspPluginPath = pluginsPath;
+	QString qtPluginPath = pluginsPath;
+
+#ifdef QT_HOME
+	QString qtHome = TO_LITERAL(QT_HOME);
+	QCoreApplication::addLibraryPath(qtHome + "/plugins"); // This is to find the platform in Qt
+	qtPluginPath = qtHome + "/qml";
+#else
+	QCoreApplication::addLibraryPath(pluginsPath);
+#endif
+
+#ifdef JASP_PLUGINS_PATH
+	jaspPluginPath = TO_LITERAL(JASP_PLUGINS_PATH);
+#endif
+
+	qputenv("QT_QPA_PLATFORM", "minimal");
 
 	std::vector<const char*> arguments = {""};
 
@@ -36,24 +55,18 @@ void init()
 		argvs[i][							strlen(arguments[i])] = '\0';
 	}
 
-	QCoreApplication::addLibraryPath(qtHome + "/plugins");
-	qputenv("QT_QPA_PLATFORM", "minimal");
 	application = new QGuiApplication(argc, argvs);
 	engine = new QQmlApplicationEngine();
 
-	engine->addImportPath(qtHome + "/qml");
-	engine->addImportPath(jaspQMLControlsPluginPath + "/components");
+	engine->addImportPath(qtPluginPath);
+	if (jaspPluginPath != qtPluginPath)
+		engine->addImportPath(jaspPluginPath);
 }
 
 // [[Rcpp::export]]
 
-
 String loadQmlFileAndCheckOptions(String qmlFileName, String options, String data)
 {
-#ifdef QT_HOME
-	string path = QT_HOME
-	return path;
-#endif
 	init();
 	engine->clearComponentCache();
 

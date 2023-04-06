@@ -109,12 +109,31 @@ if [ "${JASP_R_INTERFACE_LIBRARY}" != "" ]; then
 	PKG_CXXFLAGS=-DJASP_R_INTERFACE_LIBRARY\ ${PKG_CXXFLAGS}
 fi
 
-QT_INSTALLATION_PATH=/Users/brunoboutin/Qt/6.4.2/macos
+#QT_INSTALLATION_PATH=<Your own Qt installtion>
+#JASP_PLUGINS_PATH=<Your own build of JASP QML Controls>
 
-PKG_CXXFLAGS="-g -arch arm64 -mmacosx-version-min=12.5 -std=gnu++17 -MD -DQT_HOME=\"${QT_INSTALLATION_PATH}\" -DQT_CORE_LIB -DQT_GUI_LIB -DQT_QML_LIB -DQT_QUICK_LIB -isystem \"${QT_INSTALLATION_PATH}/lib/QtCore.framework/Headers\" -isystem \"${QT_INSTALLATION_PATH}/lib/QtCore.framework/Headers\" -isystem \"${QT_INSTALLATION_PATH}/mkspecs/macx-clang\" -isystem \"${QT_INSTALLATION_PATH}/include\" -isystem \"${QT_INSTALLATION_PATH}/lib/QtQml.framework/Headers\" -isystem \"${QT_INSTALLATION_PATH}/lib/QtQuick.framework/Headers\" -isystem \"${QT_INSTALLATION_PATH}/lib/QtGui.framework/Headers\" -iframework \"${QT_INSTALLATION_PATH}/lib\" ${PKG_CXXFLAGS}"
-#PKG_CXXFLAGS="${PKG_CXXFLAGS} -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX13.0.sdk"
+JASPBASE_INSTALL=/Users/brunoboutin/JASP/source/jaspBase/inst
 
-PKG_LIBS="-g -arch arm64 -mmacosx-version-min=12.5 -Wl,-search_paths_first -Wl,-headerpad_max_install_names  -F/${QT_INSTALLATION_PATH}/lib -Wl,-rpath,${QT_INSTALLATION_PATH}/lib ${QT_INSTALLATION_PATH}/lib/QtQuick.framework/Versions/A/QtQuick ${QT_INSTALLATION_PATH}/lib/QtQml.framework/Versions/A/QtQml ${QT_INSTALLATION_PATH}/lib/QtGui.framework/Versions/A/QtGui ${QT_INSTALLATION_PATH}/lib/QtCore.framework/Versions/A/QtCore -framework IOKit -framework DiskArbitration -Xlinker -framework -Xlinker AGL -framework AppKit -framework ImageIO -framework Metal"
+if [ "${QT_INSTALLATION_PATH}" == "" ]; then
+    QT_HEADER_PATH=${JASPBASE_INSTALL}/Qt
+    QT_FRAMEWORKS_PATH=${JASPBASE_INSTALL}/Frameworks
+else
+    QT_HEADER_PATH=${QT_INSTALLATION_PATH}
+    QT_FRAMEWORKS_PATH=${QT_INSTALLATION_PATH}/lib
+fi
+
+PKG_CXXFLAGS="-g -arch arm64 -mmacosx-version-min=12.5 -std=gnu++17 -MD -DQT_CORE_LIB -DQT_GUI_LIB -DQT_QML_LIB -DQT_QUICK_LIB -isystem \"${QT_FRAMEWORKS_PATH}/QtCore.framework/Headers\" -isystem \"${QT_HEADER_PATH}/mkspecs/macx-clang\" -isystem \"${QT_HEADER_PATH}/include\" -isystem \"${QT_FRAMEWORKS_PATH}/QtQml.framework/Headers\" -isystem \"${QT_FRAMEWORKS_PATH}/QtQuick.framework/Headers\" -isystem \"${QT_FRAMEWORKS_PATH}/QtGui.framework/Headers\" -iframework \"${QT_FRAMEWORKS_PATH}\" ${PKG_CXXFLAGS}"
+
+if [ "${QT_INSTALLATION_PATH}" != "" ]; then
+    PKG_CXXFLAGS="-DQT_HOME=\"${QT_INSTALLATION_PATH}\" ${PKG_CXXFLAGS}"
+fi
+
+if [ "${JASP_PLUGINS_PATH}" != "" ]; then
+    PKG_CXXFLAGS="-DJASP_PLUGINS_PATH=\"${JASP_PLUGINS_PATH}\" ${PKG_CXXFLAGS}"
+fi
+
+
+PKG_LIBS="-g -arch arm64 -mmacosx-version-min=12.5 -Wl,-search_paths_first -Wl,-headerpad_max_install_names  -F/${QT_FRAMEWORKS_PATH} -Wl,-rpath,${QT_FRAMEWORKS_PATH} ${QT_FRAMEWORKS_PATH}/QtQuick.framework/Versions/A/QtQuick ${QT_FRAMEWORKS_PATH}/QtQml.framework/Versions/A/QtQml ${QT_FRAMEWORKS_PATH}/QtGui.framework/Versions/A/QtGui ${QT_FRAMEWORKS_PATH}/QtCore.framework/Versions/A/QtCore -framework IOKit -framework DiskArbitration -Xlinker -framework -Xlinker AGL -framework AppKit -framework ImageIO -framework Metal"
 
 
 sed -e "s|@cppflags@|${PKG_CXXFLAGS}|" -e "s|@pkgLibs@|${PKG_LIBS}|" -e "s|@src_sources@|${SRC_SOURCES}|" -e "s|@jaspColumnEncoder_sources@|${JASPCOLUMNENCODER_SOURCES}|" src/Makevars.in > src/Makevars
